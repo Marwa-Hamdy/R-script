@@ -1,0 +1,159 @@
+# HTB analysis
+#read table
+countTable<- read.table("countTable.tsv", sep = "\t",header = TRUE)# to read table
+# HTB count table
+countTable_HTB=subset(countTable,select=c(1,2,3,4,5,6,7,8))# to keep selected columns only and remove the rest of table
+#group factor
+cell_line=factor(c(rep("HTB_UC",5),rep("HTB_SEC",3)),levels=c("HTB_UC","HTB_SEC"))
+#Filter low counts
+library(edgeR)
+meanLog2CPM<- rowMeans(log2(cpm(countTable_HTB) + 1))
+hist(meanLog2CPM)
+sum(meanLog2CPM <= 1)
+CountTable <- countTable_HTB[meanLog2CPM > 2, ]
+meanLog2CPM<- rowMeans(log2(cpm(CountTable) + 1))
+hist(meanLog2CPM)
+dim(CountTable)
+#Prepare data for QC
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix(
+  countData = CountTable,
+  design = ~ cell_line,
+  colData = data.frame(
+    cell_line = cell_line))
+normCounts <- vst(dds)
+#Histogram
+hist(assay(normCounts))
+#Heatmap
+library(pheatmap)
+sampleDist <- cor(assay(dds), method = "spearman")
+pheatmap(sampleDist, clustering_distance_rows = as.dist(1 - sampleDist),
+         clustering_distance_cols = as.dist(1 - sampleDist))
+#PCA
+pcaPlot <- plotPCA(normCounts, intgroup = c("cell_line"))
+# Identify differential expressed genes
+ddsMat <- DESeqDataSetFromMatrix(countData = CountTable,colData = data.frame(
+  cell_line = cell_line),design = ~ cell_line)#  set all experimental design before the analysis
+dds2 <- DESeq(ddsMat)   # compute the statistical analysis by the function “DESeq”
+# producing results with lfShrink
+library(ashr)
+library(xlsx)
+res_HTB <- lfcShrink(dds2, contrast=c("cell_line","HTB_SEC","HTB_UC"), type="ashr")
+write.xlsx(res_HTB,file="res_HTB.xlsx")# save table as excel file
+# Remove NA values from the data
+Res_HTB=na.omit(res_HTB)
+# Filtering with padj and log2FC
+DEGs_HTB=data.frame(Res_HTB[(Res_HTB$padj)<0.05,])#extract the genes, which have an adjusted p-value less than 0.05
+DEGs_HTB_FC=subset(DEGs_HTB,abs(log2FoldChange)>=1)# filtering log2fc
+write.xlsx(DEGs_HUVEC_FC,file="DEGs_HUVEC_FC.xlsx")
+# Finding significant up-regulated and down-regulated genes
+upReg_HTB <- subset(DEGs_HTB_FC, log2FoldChange > 0) 
+write.xlsx(upReg_HTB,file="upReg_HTB_new.xlsx")
+downReg_HTB <- subset(DEGs_HTB_FC, log2FoldChange < 0)
+write.xlsx(downReg_HTB,file="downReg_HTB_new.xlsx")
+# HUVEC analysis
+#read table
+countTable<- read.table("countTable.tsv", sep = "\t",header = TRUE)# to read table
+# HUVEC count table
+countTable_HUVEC=subset(countTable,select=c(9,10,11,12,13,14,15,16,17))# to keep selected columns only and remove the rest of table
+#group factor
+cell_line=factor(c(rep("HUVEC_UC",5),rep("HUVEC_SEC",4)),levels=c("HUVEC_UC","HUVEC_SEC"))
+#Filter low counts
+library(edgeR)
+meanLog2CPM<- rowMeans(log2(cpm(countTable_HUVEC) + 1))
+hist(meanLog2CPM)
+sum(meanLog2CPM <= 1)
+CountTable <- countTable_HUVEC[meanLog2CPM > 2, ]
+meanLog2CPM<- rowMeans(log2(cpm(CountTable) + 1))
+hist(meanLog2CPM)
+dim(CountTable)
+#Prepare data for QC
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix(
+  countData = CountTable,
+  design = ~ cell_line,
+  colData = data.frame(
+    cell_line = cell_line))
+normCounts <- vst(dds)
+#Histogram
+hist(assay(normCounts))
+#Heatmap
+library(pheatmap)
+sampleDist <- cor(assay(dds), method = "spearman")
+pheatmap(sampleDist, clustering_distance_rows = as.dist(1 - sampleDist),
+         clustering_distance_cols = as.dist(1 - sampleDist))
+#PCA
+pcaPlot <- plotPCA(normCounts, intgroup = c("cell_line"))
+# Identify differential expressed genes
+ddsMat <- DESeqDataSetFromMatrix(countData = CountTable,colData = data.frame(
+  cell_line = cell_line),design = ~ cell_line)#  set all experimental design before the analysis
+dds2 <- DESeq(ddsMat)   # compute the statistical analysis by the function “DESeq”
+# producing results with lfShrink
+library(ashr)
+library(xlsx)
+res_HUVEC <- lfcShrink(dds2, contrast=c("cell_line","HUVEC_SEC","HUVEC_UC"), type="ashr")
+write.xlsx(res_HUVEC,file="res_HUVEC.xlsx")# save table as excel file
+# Remove NA values from the data
+Res_HUVEC=na.omit(res_HUVEC)
+# Filtering with padj and log2FC
+DEGs_HUVEC=data.frame(Res_HUVEC[(Res_HUVEC$padj)<0.05,])#extract the genes, which have an adjusted p-value less than 0.05
+DEGs_HUVEC_FC=subset(DEGs_HUVEC,abs(log2FoldChange)>=1)# filtering log2fc
+write.xlsx(DEGs_HUVEC_FC,file="DEGs_HUVEC_FC.xlsx")
+# Finding significant up-regulated and down-regulated genes
+upReg_HUVEC <- subset(DEGs_HUVEC_FC, log2FoldChange > 0) 
+write.xlsx(upReg_HUVEC,file="upReg_HUVEC_new.xlsx")
+downReg_HUVEC <- subset(DEGs_HUVEC_FC, log2FoldChange < 0)
+write.xlsx(downReg_HUVEC,file="downReg_HUVEC_new.xlsx") 
+# CPC analysis
+#read table
+countTable<- read.table("countTable.tsv", sep = "\t",header = TRUE)# to read table
+# HUVEC count table
+countTable_CPC=subset(countTable,select=c(18,19,20,21,22))# to keep selected columns only and remove the rest of table
+#group factor
+cell_line=factor(c(rep("CPC_SEC",2),rep("CPC_UC",3)),levels=c("CPC_UC","CPC_SEC"))
+#Filter low counts
+library(edgeR)
+meanLog2CPM<- rowMeans(log2(cpm(countTable_CPC) + 1))
+hist(meanLog2CPM)
+sum(meanLog2CPM <= 1)
+CountTable <- countTable_CPC[meanLog2CPM > 2, ]
+meanLog2CPM<- rowMeans(log2(cpm(CountTable) + 1))
+hist(meanLog2CPM)
+dim(CountTable)
+#Prepare data for QC
+library(DESeq2)
+dds <- DESeqDataSetFromMatrix(
+  countData = CountTable,
+  design = ~ cell_line,
+  colData = data.frame(
+    cell_line = cell_line))
+normCounts <- vst(dds)
+#Histogram
+hist(assay(normCounts))
+#Heatmap
+library(pheatmap)
+sampleDist <- cor(assay(dds), method = "spearman")
+pheatmap(sampleDist, clustering_distance_rows = as.dist(1 - sampleDist),
+         clustering_distance_cols = as.dist(1 - sampleDist))
+#PCA
+pcaPlot <- plotPCA(normCounts, intgroup = c("cell_line"))
+# Identify differential expressed genes
+ddsMat <- DESeqDataSetFromMatrix(countData = CountTable,colData = data.frame(
+  cell_line = cell_line),design = ~ cell_line)#  set all experimental design before the analysis
+dds2 <- DESeq(ddsMat)   # compute the statistical analysis by the function “DESeq”
+# producing results with lfShrink
+library(ashr)
+library(xlsx)
+res_CPC <- lfcShrink(dds2, contrast=c("cell_line","CPC_SEC","CPC_UC"), type="ashr")
+write.xlsx(res_CPC,file="res_CPC.xlsx")# save table as excel file
+# Remove NA values from the data
+Res_CPC=na.omit(res_CPC)
+# Filtering with padj and log2FC
+DEGs_CPC=data.frame(Res_CPC[(Res_CPC$padj)<0.05,])#extract the genes, which have an adjusted p-value less than 0.05
+DEGs_CPC_FC=subset(DEGs_CPC,abs(log2FoldChange)>=1)# filtering log2fc
+write.xlsx(DEGs_CPC_FC,file="DEGs_CPC_FC.xlsx")
+# Finding significant up-regulated and down-regulated genes
+upReg_CPC <- subset(DEGs_CPC_FC, log2FoldChange > 0) 
+write.xlsx(upReg_CPC,file="upReg_CPC_new.xlsx")
+downReg_CPC <- subset(DEGs_CPC_FC, log2FoldChange < 0)
+write.xlsx(downReg_CPC,file="downReg_CPC_new.xlsx")
